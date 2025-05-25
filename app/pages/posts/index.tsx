@@ -6,51 +6,34 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Pagination, PaginationContent, PaginationItem, PaginationLink } from "@/components/ui/pagination"
-import type { Route } from '../../../.react-router/types/app/admin/posts/+types';
-import prisma from '@/lib/database';
+import prisma from '@/database';
+import { buildPaginationQuery, parseURLPagination } from '@/utils/search';
+import type { Route } from './+types';
+import AdminPagination from '@/components/admin-pagination';
 
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const url = new URL(request.url);
-
-  const pageParam = url.searchParams.get('page');
-  const limitParam = url.searchParams.get('limit');
-  const sortParam = url.searchParams.get('sort');
-
-  const page = parseInt(pageParam || '1');
-  const limit = parseInt(limitParam || '10');
-  const offset = (page - 1) * limit;
-
-  let orderBy: any = { created_at: 'desc' };
-
-  if (sortParam) {
-    const [field, direction] = sortParam.split(':');
-    if (field && direction && ['asc', 'desc'].includes(direction)) {
-      orderBy = { [field]: direction };
-    }
-  }
+  const { page, limit } = parseURLPagination(request);
+  const pagination = buildPaginationQuery(page, limit);
 
   const [posts, totalCount] = await Promise.all([
-    prisma.posts.findMany({
-      skip: offset,
-      take: limit,
-      orderBy,
+    prisma.post.findMany({
+      ...pagination,
       where: {
-        is_deactivated: false,
+        isDeactivated: false,
       },
       include: {
-        members: {
+        author: {
           select: { name: true },
         },
-        institutions: {
+        institution: {
           select: { name: true },
         },
       },
     }),
-    prisma.posts.count({
+    prisma.post.count({
       where: {
-        is_deactivated: false,
+        isDeactivated: false,
       },
     }),
   ]);
@@ -104,9 +87,9 @@ export default function PostsPage({ loaderData }: Route.ComponentProps) {
                   <TableRow key={post.id}>
                     <TableCell className="font-medium">{post.id}</TableCell>
                     <TableCell className="font-medium">{post.title}</TableCell>
-                    <TableCell>{post.members?.name ?? '알 수 없음'}</TableCell>
-                    <TableCell>{new Date(post.created_at).toLocaleDateString()}</TableCell>
-                    <TableCell>{post.institutions?.name ?? '정보 없음'}</TableCell>
+                    <TableCell>{post.author?.name ?? '알 수 없음'}</TableCell>
+                    <TableCell>{new Date(post.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>{post.institution?.name ?? '정보 없음'}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -134,43 +117,7 @@ export default function PostsPage({ loaderData }: Route.ComponentProps) {
                 ))}
               </TableBody>
             </Table>
-            <div className="mt-4 flex justify-center">
-              <Pagination>
-                <PaginationContent>
-                  {/* 이전 페이지 */}
-                  <PaginationItem>
-                    <PaginationLink
-                      href={`?page=${Math.max(page - 1, 1)}`}
-                      isActive={false}
-                    >
-                      이전
-                    </PaginationLink>
-                  </PaginationItem>
-
-                  {/* 숫자 페이지 링크 */}
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
-                    <PaginationItem key={num}>
-                      <PaginationLink
-                        href={`?page=${num}`}
-                        isActive={num === page}
-                      >
-                        {num}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
-
-                  {/* 다음 페이지 */}
-                  <PaginationItem>
-                    <PaginationLink
-                      href={`?page=${Math.min(page + 1, totalPages)}`}
-                      isActive={false}
-                    >
-                      다음
-                    </PaginationLink>
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
+            <AdminPagination page={page} totalPages={totalPages}/>
           </CardContent>
         </Card>
       </div>

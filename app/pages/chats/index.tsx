@@ -8,7 +8,7 @@ import { getStatusBadge } from "@/components/status-badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 const chats = [
@@ -121,7 +121,6 @@ export default function ChatsPage() {
                           {chat.participants.map((participant, index) => (
                             <Avatar key={index} className="h-6 w-6 border-2 border-white">
                               <AvatarImage src={`/placeholder.svg?height=24&width=24`} />
-                              <AvatarFallback className="text-xs">{participant[0]}</AvatarFallback>
                             </Avatar>
                           ))}
                         </div>
