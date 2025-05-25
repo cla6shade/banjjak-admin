@@ -7,3 +7,6 @@
 
 .idea
 .env
+
+/app/generated/
+/generated/prisma

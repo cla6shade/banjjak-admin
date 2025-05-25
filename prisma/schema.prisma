@@ -1,0 +1,230 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model blacklists {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique @db.VarChar(255)
+  created_at DateTime @default(now())
+  member_id  Int
+
+  @@index([email])
+}
+
+model blocks {
+  id                                Int        @id @default(autoincrement())
+  post_id                           Int?
+  chatroom_id                       Int?
+  created_at                        DateTime   @default(now())
+  issuer_id                         Int
+  target_id                         Int
+  chatrooms                         chatrooms? @relation(fields: [chatroom_id], references: [id], onDelete: NoAction)
+  members_blocks_issuer_idTomembers members    @relation("blocks_issuer_idTomembers", fields: [issuer_id], references: [id])
+  posts                             posts?     @relation(fields: [post_id], references: [id], onDelete: NoAction)
+  members_blocks_target_idTomembers members    @relation("blocks_target_idTomembers", fields: [target_id], references: [id])
+
+  @@index([chatroom_id], map: "blocks_chatroom_id_fkey")
+  @@index([issuer_id])
+  @@index([post_id], map: "blocks_post_id_fkey")
+  @@index([target_id], map: "blocks_target_id_fkey")
+}
+
+model chatrooms {
+  id                                      Int       @id @default(autoincrement())
+  post_id                                 Int
+  author_id                               Int
+  requester_id                            Int
+  created_at                              DateTime  @default(now())
+  author_nickname                         String    @db.VarChar(20)
+  requester_nickname                      String    @db.VarChar(20)
+  is_deactivated                          Boolean   @default(false)
+  blocks                                  blocks[]
+  members_chatrooms_author_idTomembers    members   @relation("chatrooms_author_idTomembers", fields: [author_id], references: [id])
+  posts                                   posts     @relation(fields: [post_id], references: [id])
+  members_chatrooms_requester_idTomembers members   @relation("chatrooms_requester_idTomembers", fields: [requester_id], references: [id])
+  chats                                   chats[]
+  reports                                 reports[]
+
+  @@index([author_id], map: "chatrooms_author_id_fkey")
+  @@index([post_id], map: "chatrooms_post_id_fkey")
+  @@index([requester_id], map: "chatrooms_requester_id_fkey")
+}
+
+model chats {
+  id                                 Int       @id @default(autoincrement())
+  chatroom_id                        Int
+  sender_id                          Int
+  receiver_id                        Int
+  is_read                            Boolean
+  created_at                         DateTime  @default(now())
+  content                            String    @db.Text
+  chatrooms                          chatrooms @relation(fields: [chatroom_id], references: [id])
+  members_chats_receiver_idTomembers members   @relation("chats_receiver_idTomembers", fields: [receiver_id], references: [id])
+  members_chats_sender_idTomembers   members   @relation("chats_sender_idTomembers", fields: [sender_id], references: [id])
+
+  @@index([chatroom_id])
+  @@index([chatroom_id, receiver_id])
+  @@index([created_at])
+  @@index([receiver_id], map: "chats_receiver_id_fkey")
+  @@index([sender_id], map: "chats_sender_id_fkey")
+}
+
+model institution_bounds {
+  id             Int          @id @default(autoincrement())
+  institution_id Int
+  start_lat      Float
+  start_lon      Float
+  default_lat    Float
+  default_lon    Float
+  end_lat        Float
+  end_lon        Float
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @default(now())
+  institutions   institutions @relation(fields: [institution_id], references: [id], onDelete: Cascade)
+
+  @@index([institution_id], map: "institution_bounds_institution_id_fkey")
+}
+
+model institutions {
+  id                 Int                  @id @default(autoincrement())
+  name               String               @unique
+  email_domain       String               @unique
+  is_active          Boolean              @default(true)
+  created_at         DateTime             @default(now())
+  updated_at         DateTime             @default(now())
+  institution_bounds institution_bounds[]
+  members            members[]
+  posts              posts[]
+}
+
+model likes {
+  id         Int      @id @default(autoincrement())
+  post_id    Int
+  created_at DateTime @default(now())
+  member_id  Int
+  members    members  @relation(fields: [member_id], references: [id])
+  posts      posts    @relation(fields: [post_id], references: [id], onDelete: Cascade)
+
+  @@index([member_id], map: "likes_member_id_fkey")
+  @@index([post_id], map: "likes_post_id_fkey")
+}
+
+model markers {
+  id        Int    @id @default(autoincrement())
+  latitude  Float
+  longitude Float
+  posts     posts?
+
+  @@index([latitude, longitude])
+}
+
+model members {
+  id                                        Int          @id @default(autoincrement())
+  email                                     String?      @unique @db.VarChar(255)
+  name                                      String       @db.VarChar(20)
+  password                                  String       @db.VarChar(88)
+  birth                                     DateTime     @default(now())
+  gender                                    Int          @default(0)
+  joined_at                                 DateTime     @default(now())
+  reported_count                            Int          @default(0)
+  is_deactivated                            Boolean      @default(false)
+  terms_accepted                            Boolean      @default(false)
+  expo_token                                String?      @db.VarChar(255)
+  institution_id                            Int          @default(1)
+  is_admin                                  Int          @default(0)
+  blocks_blocks_issuer_idTomembers          blocks[]     @relation("blocks_issuer_idTomembers")
+  blocks_blocks_target_idTomembers          blocks[]     @relation("blocks_target_idTomembers")
+  chatrooms_chatrooms_author_idTomembers    chatrooms[]  @relation("chatrooms_author_idTomembers")
+  chatrooms_chatrooms_requester_idTomembers chatrooms[]  @relation("chatrooms_requester_idTomembers")
+  chats_chats_receiver_idTomembers          chats[]      @relation("chats_receiver_idTomembers")
+  chats_chats_sender_idTomembers            chats[]      @relation("chats_sender_idTomembers")
+  likes                                     likes[]
+  institutions                              institutions @relation(fields: [institution_id], references: [id], onDelete: NoAction)
+  posts                                     posts[]
+  reports_reports_reported_idTomembers      reports[]    @relation("reports_reported_idTomembers")
+  reports_reports_reporter_idTomembers      reports[]    @relation("reports_reporter_idTomembers")
+
+  @@index([institution_id], map: "members_institution_id_fkey")
+}
+
+model posts {
+  id             Int          @id @default(autoincrement())
+  author_id      Int
+  marker_id      Int?         @unique
+  icon_idx       Int          @default(0)
+  marker_idx     Int          @default(0)
+  title          String       @db.VarChar(63)
+  content        String       @db.VarChar(255)
+  created_at     DateTime     @default(now())
+  expires_at     DateTime
+  address        String       @db.VarChar(63)
+  is_deactivated Boolean      @default(false)
+  like_count     Int          @default(0)
+  view_count     Int          @default(0)
+  institution_id Int          @default(1)
+  blocks         blocks[]
+  chatrooms      chatrooms[]
+  likes          likes[]
+  members        members      @relation(fields: [author_id], references: [id])
+  institutions   institutions @relation(fields: [institution_id], references: [id])
+  markers        markers?     @relation(fields: [marker_id], references: [id])
+  reports        reports[]
+
+  @@index([author_id], map: "posts_author_id_fkey")
+  @@index([created_at])
+  @@index([institution_id])
+}
+
+model reports {
+  id                                   Int                 @id @default(autoincrement())
+  report_type                          reports_report_type
+  post_id                              Int?
+  chatroom_id                          Int?
+  reporter_id                          Int
+  reported_id                          Int
+  created_at                           DateTime            @default(now())
+  reason                               String              @db.VarChar(255)
+  chatrooms                            chatrooms?          @relation(fields: [chatroom_id], references: [id])
+  posts                                posts?              @relation(fields: [post_id], references: [id])
+  members_reports_reported_idTomembers members             @relation("reports_reported_idTomembers", fields: [reported_id], references: [id])
+  members_reports_reporter_idTomembers members             @relation("reports_reporter_idTomembers", fields: [reporter_id], references: [id])
+
+  @@index([chatroom_id], map: "reports_chatroom_id_fkey")
+  @@index([post_id], map: "reports_post_id_fkey")
+  @@index([reported_id], map: "reports_reported_id_fkey")
+  @@index([reporter_id], map: "reports_reporter_id_fkey")
+}
+
+model verification_bypass {
+  id    Int    @id @default(autoincrement())
+  email String @unique @db.VarChar(255)
+  code  String
+}
+
+model verifications {
+  id                  Int                @id @default(autoincrement())
+  is_verified         Boolean
+  verification_number String             @db.VarChar(6)
+  email               String             @db.VarChar(255)
+  created_at          DateTime           @default(now())
+  expires_at          DateTime
+  type                verifications_type @default(REGISTER)
+
+  @@index([email])
+}
+
+enum reports_report_type {
+  POST_REPORT
+  CHATROOM_REPORT
+}
+
+enum verifications_type {
+  REGISTER
+  RESET_PASSWORD
+}
