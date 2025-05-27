@@ -1,4 +1,3 @@
-
 import type React from "react"
 
 import { Users, FileText, MessageSquare, LayoutDashboard } from "lucide-react"
@@ -6,6 +5,7 @@ import { Users, FileText, MessageSquare, LayoutDashboard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useLocation, useNavigate } from 'react-router';
+import { Toaster } from '@/components/ui/sonner';
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -19,18 +19,13 @@ const navigation = [
   },
   {
     name: "사용자 관리",
-    href: "/admin/users",
+    href: "/admin/members",
     icon: Users,
   },
   {
     name: "게시글 관리",
     href: "/admin/posts",
     icon: FileText,
-  },
-  {
-    name: "채팅 관리",
-    href: "/admin/chats",
-    icon: MessageSquare,
   },
 ]
 
@@ -69,6 +64,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">{children}</div>
+      <Toaster />
     </div>
   )
 }
