@@ -1,6 +1,16 @@
 import AdminLayout from "@/components/admin-layout"
 import StatsCards from "@/components/stats-cards"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import type { Route } from './+types';
+import { getSession } from '@/utils/session.server';
+import { redirect } from 'react-router';
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const session = await getSession(request.headers.get('Cookie'));
+  if(! session.has('memberId')) {
+    return redirect(`/login`);
+  }
+}
 
 export default function AdminDashboard() {
   return (
