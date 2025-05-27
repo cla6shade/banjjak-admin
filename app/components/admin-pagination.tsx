@@ -3,13 +3,16 @@ import {
   PaginationContent,
   PaginationItem, PaginationLink,
 } from '@/components/ui/pagination';
+import { getNextPageLink, getPageLink } from '@/utils/search';
 
 interface AdminPaginationProps {
   page: number;
   totalPages: number;
+  search?: string;
+  limit?: number;
 }
 
-export default function AdminPagination({ page, totalPages }: AdminPaginationProps) {
+export default function AdminPagination({ page, totalPages, search, limit }: AdminPaginationProps) {
   return (
     <div className="mt-4 flex justify-center">
       <Pagination>
@@ -17,7 +20,7 @@ export default function AdminPagination({ page, totalPages }: AdminPaginationPro
           {/* 이전 페이지 */}
           <PaginationItem>
             <PaginationLink
-              href={`?page=${Math.max(page - 1, 1)}`}
+              href={getNextPageLink(page, totalPages, -1, limit, search)}
               isActive={false}
             >
               이전
@@ -28,7 +31,7 @@ export default function AdminPagination({ page, totalPages }: AdminPaginationPro
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
             <PaginationItem key={num}>
               <PaginationLink
-                href={`?page=${num}`}
+                href={getPageLink(num, limit, search)}
                 isActive={num === page}
               >
                 {num}
@@ -39,7 +42,7 @@ export default function AdminPagination({ page, totalPages }: AdminPaginationPro
           {/* 다음 페이지 */}
           <PaginationItem>
             <PaginationLink
-              href={`?page=${Math.min(page + 1, totalPages)}`}
+              href={getNextPageLink(page, totalPages, 1, limit, search)}
               isActive={false}
             >
               다음
