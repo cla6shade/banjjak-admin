@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "prebuild": "prisma generate",
-    "build": "prisma generate && react-router build",
+    "build-vercel": "prisma generate && react-router build",
+    "build": "react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc"
@@ -45,6 +46,7 @@
     "tw-animate-css": "^1.3.0",
     "typescript": "^5.8.3",
     "vite": "^6.3.3",
+    "vite-plugin-static-copy": "^3.0.0",
     "vite-tsconfig-paths": "^5.1.4"
   },
   "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39"
